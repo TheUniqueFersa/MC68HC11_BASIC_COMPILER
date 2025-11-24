@@ -74,7 +74,7 @@ def cargar_set_instrucciones(ruta_excel):
 
 SET_INST = cargar_set_instrucciones("68HC11_SET_INSTRUCCIONES.xlsx")
 
-print(SET_INST["ADCA"]["IND,Y"]["byte"])
+print(SET_INST["ADCA"])
 
 
 
