@@ -1,0 +1,195 @@
+   1:      () : * PROGRAMA BURBUJA
+   2:      () : 
+   3:      () : *DECLARACION CONSTANTES
+   4:      () : 
+   5:      () : SCDR   EQU   $102F
+   6:      () : SCCR2  EQU   $102D
+   7:      () : SCSR   EQU   $102E
+   8:      () : SCCR1  EQU   $102C
+   9:      () : BAUD   EQU   $102B
+  10:      () : HPRIO  EQU   $103C
+  11:      () : SPCR   EQU   $1028
+  12:      () : CSCTL  EQU   $105D
+  13:      () : OPT2   EQU   $1038
+  14:      () : DDRD   EQU   $1009
+  15:      () : 
+  16:      () : DIR_BASE EQU $0030
+  17:      () : 
+  18:      () : *DECLARACION DE VARIABLES
+  19:      () : 
+  20:      () : ORDEN EQU $0000
+  21:      () : U1    EQU $0001
+  22:      () : U2    EQU $0002
+  23:      () : U3    EQU $0003
+  24:      () : U4    EQU $0004
+  25:      () : VAR   EQU $0005
+  26:      () : CONTA EQU $0006
+  27:      () : ALTO  EQU $0007
+  28:      () : BAJO  EQU $0008
+  29:      () : 
+  30: 8000 () :       ORG $8000
+  31: 8000 () : INICIO
+  32: 8000 (8E 00 FF) :       LDS #$00FF
+  33: 8003 (BD 80 C6) :       JSR SERIAL
+  34: 8006 () : 
+  35: 8006 () : 
+  36: 8006 (7F 00 01) :       CLR U1
+  37: 8009 (7F 00 02) :       CLR U2
+  38: 800C (7F 00 03) :       CLR U3
+  39: 800F (7F 00 04) :       CLR U4
+  40: 8012 () : CICLATE
+  41: 8012 (86 3F) :       LDAA #'?
+  42: 8014 (B7 00 00) :       STAA ORDEN
+  43: 8017 () : CICLO
+  44: 8017 (B6 00 00) :       LDAA ORDEN
+  45: 801A (81 3F) :       CMPA #'?
+  46: 801C (27 F9) :       BEQ  CICLO
+  47: 801E () : 
+  48: 801E (F6 00 01) :       LDAB U1
+  49: 8021 (26 16) :       BNE  SIGUET
+  50: 8023 () : BORRA
+  51: 8023 (7F 00 01) :       CLR U1
+  52: 8026 (7F 00 02) :       CLR U2
+  53: 8029 (7F 00 03) :       CLR U3
+  54: 802C (7F 00 04) :       CLR U4
+  55: 802F () : 
+  56: 802F (81 53) :       CMPA #'S
+  57: 8031 (26 DF) :       BNE CICLATE
+  58: 8033 (B7 00 01) :       STAA U1     * VALIDA S
+  59: 8036 (7E 80 12) :       JMP CICLATE
+  60: 8039 () : 
+  61: 8039 () : SIGUET
+  62: 8039 (F6 00 02) :       LDAB U2
+  63: 803C (26 0A) :       BNE  SIGUEA
+  64: 803E (81 54) :       CMPA #'T
+  65: 8040 (26 E1) :       BNE BORRA
+  66: 8042 (B7 00 02) :       STAA U2     * VALIDA T
+  67: 8045 (7E 80 12) :       JMP CICLATE
+  68: 8048 () : 
+  69: 8048 () : SIGUEA
+  70: 8048 (F6 00 03) :       LDAB U3
+  71: 804B (26 0A) :       BNE  SIGUER
+  72: 804D (81 41) :       CMPA #'A
+  73: 804F (26 D2) :       BNE BORRA
+  74: 8051 (B7 00 03) :       STAA U3     * VALIDA A
+  75: 8054 (7E 80 12) :       JMP CICLATE
+  76: 8057 () :       
+  77: 8057 () : SIGUER
+  78: 8057 (F6 00 04) :       LDAB U4
+  79: 805A (26 0A) :       BNE  SIGUEF
+  80: 805C (81 52) :       CMPA #'R
+  81: 805E (26 C3) :       BNE BORRA
+  82: 8060 (B7 00 04) :       STAA U4     * VALIDA R
+  83: 8063 (7E 80 12) :       JMP CICLATE
+  84: 8066 () : 
+  85: 8066 () : SIGUEF
+  86: 8066 (81 54) :       CMPA #'T
+  87: 8068 (26 B9) :       BNE BORRA
+  88: 806A () : EXITO
+  89: 806A () :       
+  90: 806A (CE 00 30) :       LDX #DIR_BASE
+  91: 806D (7F 00 05) :       CLR VAR
+  92: 8070 () : BORRA_A
+  93: 8070 (7F 00 06) :       CLR CONTA
+  94: 8073 () : LOOP
+  95: 8073 (B6 00 05) :       LDAA VAR
+  96: 8076 (27 FB) :       BEQ  LOOP
+  97: 8078 () : 
+  98: 8078 (7F 00 05) :       CLR  VAR
+  99: 807B (F6 00 00) :       LDAB ORDEN
+ 100: 807E (D7 00) :       STAB $00,X
+ 101: 8080 (08) :       INX
+ 102: 8081 (C1 41) :       CMPB #'A
+ 103: 8083 (26 EB) :       BNE  BORRA_A
+ 104: 8085 (7C 00 06) :       INC  CONTA
+ 105: 8088 (B6 00 06) :       LDAA CONTA
+ 106: 808B (81 04) :       CMPA #04
+ 107: 808D (26 E4) :       BNE  LOOP
+ 108: 808F () : 
+ 109: 808F () : BURBUJA
+ 110: 808F () : 
+ 111: 808F (18 CE 00 30) :       LDY #DIR_BASE   * I=0
+ 112: 8093 () :       
+ 113: 8093 (8F) :       XGDX            * J=n-1
+ 114: 8094 (83 00 05) :       SUBD #5
+ 115: 8097 (8F) :       XGDX
+ 116: 8098 () : 
+ 117: 8098 () : CICLO_FOR1
+ 118: 8098 () : 
+ 119: 8098 (8C 00 30) :       CPX  #DIR_BASE   * IF 0<J
+ 120: 809B (22 03) :       BHI  CICLO_FOR2
+ 121: 809D (7E 80 00) :       JMP INICIO
+ 122: 80A0 () : 
+ 123: 80A0 () : CICLO_FOR2
+ 124: 80A0 () : 
+ 125: 80A0 (FF 00 07) :       STY  ALTO
+ 126: 80A4 (BC 00 07) :       CPX  ALTO         * X - Y  
+ 127: 80A7 (22 08) :       BHI  COMPARA
+ 128: 80A9 (09) :       DEX
+ 129: 80AA () :       
+ 130: 80AA (18 CE 00 30) :       LDY  #DIR_BASE
+ 131: 80AE (7E 80 98) :       JMP  CICLO_FOR1
+ 132: 80B1 () : 
+ 133: 80B1 () : COMPARA
+ 134: 80B1 (96 00) :       LDAA $00,Y
+ 135: 80B3 (D6 01) :       LDAB $01,Y
+ 136: 80B5 (11) :       CBA  
+ 137: 80B6 (22 05) :       BHI  INTERCAMBIA
+ 138: 80B8 (18 08) :       INY
+ 139: 80BA (7E 80 A0) :       JMP  CICLO_FOR2
+ 140: 80BD () : 
+ 141: 80BD () : INTERCAMBIA
+ 142: 80BD () :       
+ 143: 80BD (D7 00) :       STAB $00,Y
+ 144: 80BF (97 01) :       STAA $01,Y
+ 145: 80C1 (18 08) :       INY
+ 146: 80C3 (7E 80 A0) :       JMP  CICLO_FOR2
+ 147: 80C6 () : 
+ 148: 80C6 () : 
+ 149: 80C6 () : 
+ 150: 80C6 () : SERIAL
+ 151: 80C6 () : 
+ 152: 80C6 (CC 30 2C) :        LDD   #$302C  * CONFIGURA PUERTO SERIAL
+ 153: 80C9 (B7 10 2B) :        STAA  BAUD    * BAUD  9600  para cristal de 8MHz
+ 154: 80CC (F7 10 2D) :        STAB  SCCR2   * HABILITA  RX Y TX PERO INTERRUPCN SOLO RX
+ 155: 80CF (86 00) :        LDAA  #$00
+ 156: 80D1 (B7 10 2C) :        STAA  SCCR1   * 8 BITS
+ 157: 80D4 () : 
+ 158: 80D4 (86 FE) :        LDAA  #$FE    * CONFIG PUERTO D COMO SALIDAS (EXCEPTO PD0)
+ 159: 80D6 (B7 10 09) :        STAA  DDRD    * SEA  ENABLE DEL DISPLAY  PD4  Y RS PD3
+ 160: 80D9 () :                      
+ 161: 80D9 () :       
+ 162: 80D9 (86 04) :        LDAA  #$04
+ 163: 80DB (B7 10 3C) :        STAA  HPRIO
+ 164: 80DE () : 
+ 165: 80DE (86 00) :        LDAA  #$00
+ 166: 80E0 (06) :        TAP
+ 167: 80E1 (39) :       RTS
+ 168: 80E2 () : 
+ 169: 80E2 () :       
+ 170: 80E2 () : ***********************************
+ 171: 80E2 () : * ATENCION A INTERRUPCION SERIAL
+ 172: 80E2 () : ***********************************
+ 173: F100 () :        ORG  $F100
+ 174: F100 () : 
+ 175: F100 (B6 10 2E) :        LDAA SCSR
+ 176: F103 (B6 10 2F) :        LDAA SCDR
+ 177: F106 (B7 00 00) :        STAA ORDEN
+ 178: F109 (7A 00 05) :        DEC  VAR
+ 179: F10C () :          
+ 180: F10C (3B) :        RTI
+ 181: F10D () : 
+ 182: F10D () : ***********************************
+ 183: F10D () : * VECTOR INTERRUPCION SERIAL
+ 184: F10D () : ***********************************
+ 185: FFD6 () :        ORG   $FFD6
+ 186: FFD6 (F1 00) :        FCB   $F1,$00       
+ 187: FFD8 () : 
+ 188: FFD8 () : 
+ 189: FFD8 () : ***********************************
+ 190: FFD8 () : *RESET
+ 191: FFD8 () : ***********************************
+ 192: FFFE () :        ORG    $FFFE
+ 193: FFFE (80 00) : RESET  FCB    $80,$00
+ 194: 0000 () : ***********************************
+ 195: 0000 () :        END   $8000

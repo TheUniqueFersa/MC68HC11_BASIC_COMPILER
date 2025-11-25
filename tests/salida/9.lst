@@ -1,0 +1,8 @@
+   1:      () : ; PROGRAMA 9: INSTRUCCIÓN PEGADA AL MARGEN (SIN ESPACIO)
+   2:      () : 
+   3: 8000 () :         ORG   $8000
+   4: 8000 () : 
+   5: 8000 (CE 00 00) :         LDX   #$0000
+   6: 8003 (86 17) :  ldaa  #$17                     ; ERROR: instrucción sin espacio inicial, solo etiquetas van al margen
+   7: 8005 (3F) :         SWI
+   8: 8006 () :         END  $8000

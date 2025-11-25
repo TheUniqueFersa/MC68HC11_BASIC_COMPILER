@@ -1,0 +1,47 @@
+<html><head><meta charset='utf-8'>
+
+<style>
+body  { font-family: monospace; background:#ffffff; color:#000000; }
+pre   { font-family: monospace; }
+.line { white-space: pre; }
+
+.addr      { color:#0066cc; }
+.bytes     { }
+.byte      { }
+.byte.opcode  { color:#d00000; font-weight:bold; }
+.byte.operand { color:#007000; }
+.byte.data    { color:#555555; }
+
+.label    { color:#b35900; font-weight:bold; }
+.mnemonic { color:#0000aa; font-weight:bold; }
+.comment  { color:#888888; }
+
+.op-imm  { color:#ff7f00; }
+.op-dir  { color:#008b8b; }
+.op-ext  { color:#800080; }
+.op-indx { color:#2f4f4f; }
+.op-indy { color:#2f4f4f; font-style:italic; }
+.op-rel  { color:#b22222; }
+
+</style>
+</head><body><pre>
+S1138000<span class='byte opcode'>8E</span><span class='byte operand'>00</span><span class='byte operand'>FF</span><span class='byte opcode'>BD</span><span class='byte operand'>80</span><span class='byte operand'>C6</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>01</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>02</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>03</span><span class='byte opcode'>7F</span>DA
+S1138010<span class='byte operand'>00</span><span class='byte operand'>04</span><span class='byte opcode'>86</span><span class='byte operand'>3F</span><span class='byte opcode'>B7</span><span class='byte operand'>00</span><span class='byte operand'>00</span><span class='byte opcode'>B6</span><span class='byte operand'>00</span><span class='byte operand'>00</span><span class='byte opcode'>81</span><span class='byte operand'>3F</span><span class='byte opcode'>27</span><span class='byte operand'>F9</span><span class='byte opcode'>F6</span><span class='byte operand'>00</span>50
+S1138020<span class='byte operand'>01</span><span class='byte opcode'>26</span><span class='byte operand'>16</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>01</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>02</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>03</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>04</span><span class='byte opcode'>81</span>88
+S1138030<span class='byte operand'>53</span><span class='byte opcode'>26</span><span class='byte operand'>DF</span><span class='byte opcode'>B7</span><span class='byte operand'>00</span><span class='byte operand'>01</span><span class='byte opcode'>7E</span><span class='byte operand'>80</span><span class='byte operand'>12</span><span class='byte opcode'>F6</span><span class='byte operand'>00</span><span class='byte operand'>02</span><span class='byte opcode'>26</span><span class='byte operand'>0A</span><span class='byte opcode'>81</span><span class='byte operand'>54</span>1F
+S1138040<span class='byte opcode'>26</span><span class='byte operand'>E1</span><span class='byte opcode'>B7</span><span class='byte operand'>00</span><span class='byte operand'>02</span><span class='byte opcode'>7E</span><span class='byte operand'>80</span><span class='byte operand'>12</span><span class='byte opcode'>F6</span><span class='byte operand'>00</span><span class='byte operand'>03</span><span class='byte opcode'>26</span><span class='byte operand'>0A</span><span class='byte opcode'>81</span><span class='byte operand'>41</span><span class='byte opcode'>26</span>4B
+S1138050<span class='byte operand'>D2</span><span class='byte opcode'>B7</span><span class='byte operand'>00</span><span class='byte operand'>03</span><span class='byte opcode'>7E</span><span class='byte operand'>80</span><span class='byte operand'>12</span><span class='byte opcode'>F6</span><span class='byte operand'>00</span><span class='byte operand'>04</span><span class='byte opcode'>26</span><span class='byte operand'>0A</span><span class='byte opcode'>81</span><span class='byte operand'>52</span><span class='byte opcode'>26</span><span class='byte operand'>C3</span>9A
+S1138060<span class='byte opcode'>B7</span><span class='byte operand'>00</span><span class='byte operand'>04</span><span class='byte opcode'>7E</span><span class='byte operand'>80</span><span class='byte operand'>12</span><span class='byte opcode'>81</span><span class='byte operand'>54</span><span class='byte opcode'>26</span><span class='byte operand'>B9</span><span class='byte opcode'>CE</span><span class='byte operand'>00</span><span class='byte operand'>30</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>05</span>0B
+S1138070<span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>06</span><span class='byte opcode'>B6</span><span class='byte operand'>00</span><span class='byte operand'>05</span><span class='byte opcode'>27</span><span class='byte operand'>FB</span><span class='byte opcode'>7F</span><span class='byte operand'>00</span><span class='byte operand'>05</span><span class='byte opcode'>F6</span><span class='byte operand'>00</span><span class='byte operand'>00</span><span class='byte opcode'>D7</span><span class='byte operand'>00</span>49
+S1138080<span class='byte opcode'>08</span><span class='byte opcode'>C1</span><span class='byte operand'>41</span><span class='byte opcode'>26</span><span class='byte operand'>EB</span><span class='byte opcode'>7C</span><span class='byte operand'>00</span><span class='byte operand'>06</span><span class='byte opcode'>B6</span><span class='byte operand'>00</span><span class='byte operand'>06</span><span class='byte opcode'>81</span><span class='byte operand'>04</span><span class='byte opcode'>26</span><span class='byte operand'>E4</span><span class='byte opcode'>18</span>EC
+S1138090<span class='byte opcode'>CE</span><span class='byte operand'>00</span><span class='byte operand'>30</span><span class='byte opcode'>8F</span><span class='byte opcode'>83</span><span class='byte operand'>00</span><span class='byte operand'>05</span><span class='byte opcode'>8F</span><span class='byte opcode'>8C</span><span class='byte operand'>00</span><span class='byte operand'>30</span><span class='byte opcode'>22</span><span class='byte operand'>03</span><span class='byte opcode'>7E</span><span class='byte operand'>80</span><span class='byte operand'>00</span>59
+S10680A0<span class='byte opcode'>FF</span><span class='byte operand'>00</span><span class='byte operand'>07</span>D3
+S11380A4<span class='byte opcode'>BC</span><span class='byte operand'>00</span><span class='byte operand'>07</span><span class='byte opcode'>22</span><span class='byte operand'>08</span><span class='byte opcode'>09</span><span class='byte opcode'>18</span><span class='byte opcode'>CE</span><span class='byte operand'>00</span><span class='byte operand'>30</span><span class='byte opcode'>7E</span><span class='byte operand'>80</span><span class='byte operand'>98</span><span class='byte opcode'>96</span><span class='byte operand'>00</span><span class='byte opcode'>D6</span>BA
+S11380B4<span class='byte operand'>01</span><span class='byte opcode'>11</span><span class='byte opcode'>22</span><span class='byte operand'>05</span><span class='byte opcode'>18</span><span class='byte opcode'>08</span><span class='byte opcode'>7E</span><span class='byte operand'>80</span><span class='byte operand'>A0</span><span class='byte opcode'>D7</span><span class='byte operand'>00</span><span class='byte opcode'>97</span><span class='byte operand'>01</span><span class='byte opcode'>18</span><span class='byte opcode'>08</span><span class='byte opcode'>7E</span>B4
+S11380C4<span class='byte operand'>80</span><span class='byte operand'>A0</span><span class='byte opcode'>CC</span><span class='byte operand'>30</span><span class='byte operand'>2C</span><span class='byte opcode'>B7</span><span class='byte operand'>10</span><span class='byte operand'>2B</span><span class='byte opcode'>F7</span><span class='byte operand'>10</span><span class='byte operand'>2D</span><span class='byte opcode'>86</span><span class='byte operand'>00</span><span class='byte opcode'>B7</span><span class='byte operand'>10</span><span class='byte operand'>2C</span>C1
+S11180D4<span class='byte opcode'>86</span><span class='byte operand'>FE</span><span class='byte opcode'>B7</span><span class='byte operand'>10</span><span class='byte operand'>09</span><span class='byte opcode'>86</span><span class='byte operand'>04</span><span class='byte opcode'>B7</span><span class='byte operand'>10</span><span class='byte operand'>3C</span><span class='byte opcode'>86</span><span class='byte operand'>00</span><span class='byte opcode'>06</span><span class='byte opcode'>39</span>F4
+S110F100<span class='byte opcode'>B6</span><span class='byte operand'>10</span><span class='byte operand'>2E</span><span class='byte opcode'>B6</span><span class='byte operand'>10</span><span class='byte operand'>2F</span><span class='byte opcode'>B7</span><span class='byte operand'>00</span><span class='byte operand'>00</span><span class='byte opcode'>7A</span><span class='byte operand'>00</span><span class='byte operand'>05</span><span class='byte opcode'>3B</span>A4
+S105FFD6<span class='byte data'>F1</span><span class='byte data'>00</span>34
+S105FFFE<span class='byte data'>80</span><span class='byte data'>00</span>7D
+S90380007C
+</pre></body></html>

@@ -1,0 +1,15 @@
+  ORG $8000
+INICIO
+  LDX #1789
+CICLO
+  NOP
+  NOP
+  NOP
+  NOP
+  NOP
+  DEX
+  BNE CICLO
+  JMP INICIO
+  END
+
+
