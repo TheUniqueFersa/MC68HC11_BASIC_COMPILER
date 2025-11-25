@@ -1,0 +1,21 @@
+body  { font-family: monospace; background:#ffffff; color:#000000; }
+pre   { font-family: monospace; }
+.line { white-space: pre; }
+
+.addr      { color:#0066cc; }
+.bytes     { }
+.byte      { }
+.byte.opcode  { color:#d00000; font-weight:bold; }
+.byte.operand { color:#007000; }
+.byte.data    { color:#555555; }
+
+.label    { color:#b35900; font-weight:bold; }
+.mnemonic { color:#0000aa; font-weight:bold; }
+.comment  { color:#888888; }
+
+.op-imm  { color:#ff7f00; }
+.op-dir  { color:#008b8b; }
+.op-ext  { color:#800080; }
+.op-indx { color:#2f4f4f; }
+.op-indy { color:#2f4f4f; font-style:italic; }
+.op-rel  { color:#b22222; }

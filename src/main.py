@@ -11,17 +11,91 @@ import html
 import pandas as pd
 
 
-def validar_extension_source(source_path: str) -> bool:
+# ---------------------------------------------------------------------
+#  Estructuras de datos
+# ---------------------------------------------------------------------
+
+@dataclass
+class AsmError:
+    line_no: int
+    code: int
+    message: str
+
+@dataclass
+class ParsedLine:
+    line_no: int
+    label: Optional[str]
+    mnemonic: Optional[str]    # puede ser directiva o instrucción
+    operands: List[str]
+    comment: str
+    raw: str
+
+@dataclass
+class LineObject:
+    parsed: ParsedLine
+    address: Optional[int] = None  # dirección de la instrucción / dato
+    size_bytes: int = 0  # bytes totales que ocupa en memoria
+    mode: Optional[str] = None     # modo de direccionamiento elegido
+    object_bytes: List[int] = field(default_factory=list)  # bytes finales
+    errors: List[AsmError] = field(default_factory=list)
+
+@dataclass
+class SymbolTables:
+    labels: Dict[str, int]          # etiquetas con dirección
+    constants: Dict[str, int]       # nombre EQU valor
+    variables: Dict[str, int]       # etiquetas de FCB (dirección de variable)
+
+
+# Para compilacion
+@dataclass
+class CompileResult:
+    lines: List[LineObject]
+    symbols: SymbolTables
+    errors: List[AsmError]
+
+@dataclass
+class CompileResult:
+    lines: List[LineObject]
+    symbols: SymbolTables
+    errors: List[AsmError]
+
+# ---------------------------------------------------------------------
+#  Errores y Directivas
+# ---------------------------------------------------------------------
+
+ERRORES = {
+    1: "CONSTANTE INEXISTENTE",
+    2: "VARIABLE INEXISTENTE",
+    3: "ETIQUETA INEXISTENTE",
+    4: "MNEMÓNICO INEXISTENTE",
+    5: "INSTRUCCIÓN CARECE DE OPERANDO(S)",
+    6: "INSTRUCCIÓN NO LLEVA OPERANDO(S)",
+    7: "MAGNITUD DE OPERANDO ERRÓNEA",
+    8: "SALTO RELATIVO MUY LEJANO",
+    9: "INSTRUCCIÓN CARECE DE AL MENOS UN ESPACIO RELATIVO AL MARGEN",
+    10: "NO SE ENCUENTRA END",
+}
+
+DIRECTIVAS = {"ORG", "EQU", "FCB", "END"}
+
+MNEMONICOS_BRANCH = {
+    "BRA", "BRN", "BHI", "BLS", "BCC", "BCS",
+    "BNE", "BEQ", "BVC", "BVS", "BPL", "BMI",
+    "BGE", "BLT", "BGT", "BLE", "BSR"
+}
+
+
+def validar_extencion_correcta(path_archivo: str) -> bool:
     """
     Acepta únicamente archivos con extensión .asm o .asc.
     En caso contrario, muestra un mensaje y devuelve False.
     """
-    _, ext = os.path.splitext(source_path)
+    _, ext = os.path.splitext(path_archivo)
     ext = ext.lower()
 
     if ext not in (".asm", ".asc"):
-        print(f"[ERROR] Archivo fuente '{source_path}' con extensión no válida: '{ext}'")
-        print("        Sólo se permiten archivos con extensión .asm o .asc.")
+        print(f"[ERROR] Archivo fuente '{path_archivo}' con extensión no válida: '{ext}'")
+        print("        Solo se permiten archivos con extensión .asm o .asc.")
         return False
 
     return True
@@ -29,33 +103,25 @@ def validar_extension_source(source_path: str) -> bool:
 
 def cargar_set_instrucciones(ruta_excel: str) -> dict:
     """
-    Lee el Excel con el set de instrucciones del 68HC11 y construye:
+    Lee el Excel con el set de instrucciones del 68HC11 y construye dic de la forma:
         SET_INST[mnem][modo] = {"opcode": str, "ciclo": int, "byte": int}
-
-    Maneja errores:
-      - Archivo no encontrado
-      - Problemas al leer el Excel (motor, formato, etc.)
     """
 
     if not os.path.exists(ruta_excel):
         print(f"[ERROR] No se encontró el archivo de set de instrucciones: '{ruta_excel}'")
-        print("        Verifica la ruta o el nombre del archivo.")
-        # Puedes elegir: salir del programa o lanzar excepción
+        print("        Verifica la ruta o el nombre del archivo.")        
         raise FileNotFoundError(ruta_excel)
 
     try:
         df = pd.read_excel(ruta_excel, header=0)
     except FileNotFoundError:
-        # En teoría no llegas aquí porque ya validamos con os.path.exists,
-        # pero lo dejamos por robustez.
         print(f"[ERROR] No se pudo abrir el archivo Excel: '{ruta_excel}'")
         raise
     except Exception as e:
         print(f"[ERROR] Fallo al leer el Excel '{ruta_excel}': {e}")
-        # Aquí puedes decidir si abortas:
         raise
 
-    # Estandarizar encabezados
+    # Para Estandarizar encabezados
     df.columns = [str(c).strip().upper() for c in df.columns]
 
     col_mnem = "MNEMONICO"
@@ -67,16 +133,16 @@ def cargar_set_instrucciones(ruta_excel: str) -> dict:
     columnas = list(df.columns)
     columnas.remove(col_mnem)
 
-    # Detectar modos (cada 3 columnas es un modo: OPCODE, CICLO, BYTE)
+    # Detectar modos (cada 3 columnas es un modo, por ejjmplo: OPCODE, CICLO, BYTE)
     modos: dict[str, tuple[str, str, str]] = {}
     i = 0
     while i + 2 < len(columnas):
-        modo = columnas[i]          # Ej: "IMM", "DIR", "IND,X", ...
+        modo = columnas[i]          # tendra "IMM", "DIR", "IND,X" y asi
         col_opcode = columnas[i]
-        col_ciclo  = columnas[i + 1]
-        col_byte   = columnas[i + 2]
+        col_ciclo  = columnas[i+1]
+        col_byte   = columnas[i+2]
         modos[modo] = (col_opcode, col_ciclo, col_byte)
-        i += 3
+        i+=3
 
     SET_INST: dict[str, dict[str, dict[str, object]]] = {}
 
@@ -115,10 +181,12 @@ def cargar_set_instrucciones(ruta_excel: str) -> dict:
 
     return SET_INST
 
+""" Ya no se usa
 DEFAULT_EXCEL = os.path.join(
     os.path.dirname(__file__),
-    "68HC11_SET_INSTRUCCIONES.xlsx"    # nombre de tu Excel
+    "68HC11_SET_INSTRUCCIONES.xlsx"    # nombre por default del  Excel
 )
+"""
 def resource_path(relative_path: str) -> str:
     """
     Devuelve la ruta absoluta a un recurso tanto en desarrollo
@@ -132,14 +200,13 @@ def resource_path(relative_path: str) -> str:
 
 DEFAULT_EXCEL = resource_path("68HC11_SET_INSTRUCCIONES.xlsx")
 
-from typing import Optional
-# ------------------------------- ARCHIVOS
 
+# ------------------------- PARA EL FINARIO ------------------------------------
 def _build_out_path(source_path: str, out_dir: Optional[str], ext: str) -> str:
     """
-    Construye ruta de salida:
+        Construye ruta de salida:
         out_dir / <nombre_sin_ext><ext>
-    Si out_dir es None -> cwd (directorio desde donde se ejecuta compi).
+        Si out_dir es None -> cwd (directorio desde donde se ejecuta compi).
     """
     if not out_dir:
         out_dir = os.getcwd()
@@ -152,13 +219,13 @@ def parse_flag_string(flags: str):
     Convierte la cadena de banderas (sin el '-') en seis booleanos:
         gen_lst, gen_ms19, gen_s19, gen_lst_html, gen_ms19_html, gen_s19_html
     """
-    # DEFAULT: sin banderas → LST txt + S19 txt
+    # DEFAULT: sin banderas indica: LST en txt y S19 en txt
     if not flags:
         return True, False, True, False, False, False
 
     flags = flags.strip()
 
-    # -A → todo
+    # -A: todo
     if "A" in flags:
         return True, True, True, True, True, True
 
@@ -192,68 +259,11 @@ def parse_flag_string(flags: str):
     return gen_lst, gen_ms19, gen_s19, gen_lst_h, gen_ms19_h, gen_s19_h
 
 
-
-
-# ----------------------------
-
-# ---------------------------------------------------------------------
-#  Estructuras de datos
-# ---------------------------------------------------------------------
-
-@dataclass
-class AsmError:
-    line_no: int
-    code: int
-    message: str
-
-@dataclass
-class ParsedLine:
-    line_no: int
-    label: Optional[str]
-    mnemonic: Optional[str]    # puede ser directiva o instrucción
-    operands: List[str]
-    comment: str
-    raw: str
-
-@dataclass
-class LineObject:
-    parsed: ParsedLine
-    address: Optional[int] = None          # dirección de la instrucción / dato
-    size_bytes: int = 0                    # bytes totales que ocupa en memoria
-    mode: Optional[str] = None             # modo de direccionamiento elegido
-    object_bytes: List[int] = field(default_factory=list)  # bytes finales
-    errors: List[AsmError] = field(default_factory=list)
-
-# ---------------------------------------------------------------------
-#  Errores del proyecto
-# ---------------------------------------------------------------------
-
-ERRORS = {
-    1: "CONSTANTE INEXISTENTE",
-    2: "VARIABLE INEXISTENTE",
-    3: "ETIQUETA INEXISTENTE",
-    4: "MNEMÓNICO INEXISTENTE",
-    5: "INSTRUCCIÓN CARECE DE OPERANDO(S)",
-    6: "INSTRUCCIÓN NO LLEVA OPERANDO(S)",
-    7: "MAGNITUD DE OPERANDO ERRÓNEA",
-    8: "SALTO RELATIVO MUY LEJANO",
-    9: "INSTRUCCIÓN CARECE DE AL MENOS UN ESPACIO RELATIVO AL MARGEN",
-    10: "NO SE ENCUENTRA END",
-}
-
-DIRECTIVES = {"ORG", "EQU", "FCB", "END"}
-
-BRANCH_MNEMONICS = {
-    "BRA", "BRN", "BHI", "BLS", "BCC", "BCS",
-    "BNE", "BEQ", "BVC", "BVS", "BPL", "BMI",
-    "BGE", "BLT", "BGT", "BLE", "BSR"
-}
-
 # ---------------------------------------------------------------------
 #  Utilidades
 # ---------------------------------------------------------------------
 
-def classify_bytes(lo: LineObject, SET_INST: Dict) -> list[str]:
+def clasificar_bytes(lo: LineObject, SET_INST: Dict) -> list[str]:
     """
     Clasifica cada byte de object_code de una línea como:
       - 'opcode'
@@ -315,7 +325,7 @@ def build_mem_info(result: CompileResult, SET_INST: Dict) -> tuple[dict[int, int
         if lo.address is None or not lo.object_bytes:
             continue
 
-        tags = classify_bytes(lo, SET_INST)
+        tags = clasificar_bytes(lo, SET_INST)
         for i, b in enumerate(lo.object_bytes):
             addr = (lo.address + i) & 0xFFFF
             tag = tags[i] if i < len(tags) else "data"
@@ -334,7 +344,7 @@ def build_mem_info(result: CompileResult, SET_INST: Dict) -> tuple[dict[int, int
     return mem, mem_tag
 # -----------------------------------------------------------------------------
 
-CSS_COMMON = """
+CSS_COMUN = """
 <style>
 body  { font-family: monospace; background:#ffffff; color:#000000; }
 pre   { font-family: monospace; }
@@ -374,7 +384,7 @@ def hex_to_int(token: str) -> Optional[int]:
     except ValueError:
         return None
 
-def parse_immediate(token: str) -> Tuple[Optional[str], Optional[int]]:
+def parse_inmediato(token: str) -> Tuple[Optional[str], Optional[int]]:
     """
     Convierte un inmediato a:
       - ('NOMBRE', None) si es símbolo (#CONST)
@@ -444,8 +454,8 @@ def tokenizar_linea(raw_line: str, line_no: int, mnemonics: set[str]) -> ParsedL
 
     if indent == 0:
         # Sin espacios al margen: o es etiqueta o es instrucción mal indentada
-        if first in mnemonics or first in DIRECTIVES:
-            # Instrucción/directiva pegada al margen → se marca error 9 después
+        if first in mnemonics or first in DIRECTIVAS:
+            # Instrucción/directiva pegada al margen: se marca error 9 después
             mnemonic = first
             operand_str = tail.strip()
         else:
@@ -459,7 +469,7 @@ def tokenizar_linea(raw_line: str, line_no: int, mnemonics: set[str]) -> ParsedL
             else:
                 operand_str = ""
     else:
-        # Hay indentación → no hay etiqueta
+        # Hay indentación: no hay etiqueta
         mnemonic = first
         operand_str = tail.strip()
 
@@ -471,7 +481,6 @@ def tokenizar_linea(raw_line: str, line_no: int, mnemonics: set[str]) -> ParsedL
 # ---------------------------------------------------------------------
 #  Detección de modo de direccionamiento
 # ---------------------------------------------------------------------
-
 def detectar_modo(mnem: str, operands: List[str], SET_INST: Dict) -> Optional[str]:
     """Determina el modo según los operandos y lo que soporta el mnemónico."""
     if mnem not in SET_INST:
@@ -498,7 +507,7 @@ def detectar_modo(mnem: str, operands: List[str], SET_INST: Dict) -> Optional[st
         return "IND,Y" if "IND,Y" in modos_disponibles else None
 
     # Relativo
-    if mnem in BRANCH_MNEMONICS and "REL" in modos_disponibles:
+    if mnem in MNEMONICOS_BRANCH and "REL" in modos_disponibles:
         return "REL"
 
     # Dir/Ext: si es valor numérico podemos decidir por rango
@@ -510,13 +519,13 @@ def detectar_modo(mnem: str, operands: List[str], SET_INST: Dict) -> Optional[st
         if "EXT" in modos_disponibles:
             return "EXT"
 
-    # Simbólico: si solo hay EXT → EXT, si solo DIR → DIR
+    # Simbólico: si solo hay EXT: EXT, si solo DIR: DIR
     if "DIR" in modos_disponibles and "EXT" not in modos_disponibles:
         return "DIR"
     if "EXT" in modos_disponibles and "DIR" not in modos_disponibles:
         return "EXT"
 
-    # Ambiguo → por simplicidad elegimos EXT (más grande)
+    # Ambiguo: por simplicidad elegimos EL EXT (más grande)
     if "EXT" in modos_disponibles:
         return "EXT"
 
@@ -526,12 +535,6 @@ def detectar_modo(mnem: str, operands: List[str], SET_INST: Dict) -> Optional[st
 #  Primera pasada: tokenización + etiquetas + constantes + variables
 # ---------------------------------------------------------------------
 
-@dataclass
-class SymbolTables:
-    labels: Dict[str, int]          # etiquetas con dirección
-    constants: Dict[str, int]       # nombre EQU valor
-    variables: Dict[str, int]       # etiquetas de FCB (dirección de variable)
-
 def primera_pasada(path: str, SET_INST: Dict) -> Tuple[List[LineObject], SymbolTables, List[AsmError]]:
     """
     - Lee el archivo.
@@ -540,7 +543,7 @@ def primera_pasada(path: str, SET_INST: Dict) -> Tuple[List[LineObject], SymbolT
     - Calcula dirección y tamaño aproximado de cada línea.
     - Cada ORG que aparezca mueve el contador de dirección (location counter).
     - Las constantes EQU no ocupan memoria y pueden ir en cualquier parte.
-    - current_addr siempre se mantiene en 16 bits (0x0000–0xFFFF) con envolvimiento.
+    - current_addr siempre se mantiene en 16 bits (0000-FFFF) con envolvimiento.
     """
     line_objs: List[LineObject] = []
     errors: List[AsmError] = []
@@ -548,7 +551,7 @@ def primera_pasada(path: str, SET_INST: Dict) -> Tuple[List[LineObject], SymbolT
     constants: Dict[str, int] = {}
     variables: Dict[str, int] = {}
 
-    mnemonics = set(SET_INST.keys()) | DIRECTIVES
+    mnemonics = set(SET_INST.keys()) | DIRECTIVAS
 
     with open(path, "r", encoding="ansi", errors="ignore") as f:
         lines = f.readlines()
@@ -571,16 +574,16 @@ def primera_pasada(path: str, SET_INST: Dict) -> Tuple[List[LineObject], SymbolT
         if pl.mnemonic and pl.label is None:
             if pl.raw and not pl.raw.startswith((" ", "\t")):
                 if mnem in SET_INST:   # solo para instrucciones reales
-                    lo.errors.append(AsmError(pl.line_no, 9, ERRORS[9]))
+                    lo.errors.append(AsmError(pl.line_no, 9, ERRORES[9]))
 
         # ORG
         if mnem == "ORG":
             if not pl.operands:
-                lo.errors.append(AsmError(pl.line_no, 5, ERRORS[5]))
+                lo.errors.append(AsmError(pl.line_no, 5, ERRORES[5]))
                 continue
             val = hex_to_int(pl.operands[0])
             if val is None:
-                lo.errors.append(AsmError(pl.line_no, 7, ERRORS[7]))
+                lo.errors.append(AsmError(pl.line_no, 7, ERRORES[7]))
                 continue
             current_addr = val & 0xFFFF  # limitar a 16 bits
             lo.address = current_addr
@@ -597,11 +600,11 @@ def primera_pasada(path: str, SET_INST: Dict) -> Tuple[List[LineObject], SymbolT
         # EQU (constante, no ocupa memoria)
         if mnem == "EQU" and pl.label:
             if not pl.operands:
-                lo.errors.append(AsmError(pl.line_no, 5, ERRORS[5]))
+                lo.errors.append(AsmError(pl.line_no, 5, ERRORES[5]))
             else:
                 val = hex_to_int(pl.operands[0])
                 if val is None:
-                    lo.errors.append(AsmError(pl.line_no, 7, ERRORS[7]))
+                    lo.errors.append(AsmError(pl.line_no, 7, ERRORES[7]))
                 else:
                     constants[pl.label] = val & 0xFFFF
             lo.address = None
@@ -634,7 +637,7 @@ def primera_pasada(path: str, SET_INST: Dict) -> Tuple[List[LineObject], SymbolT
 
         # MNEMÓNICO INEXISTENTE
         if mnem not in SET_INST:
-            lo.errors.append(AsmError(pl.line_no, 4, ERRORS[4]))
+            lo.errors.append(AsmError(pl.line_no, 4, ERRORES[4]))
             lo.address = current_addr
             lo.size_bytes = 0
             continue
@@ -653,7 +656,7 @@ def primera_pasada(path: str, SET_INST: Dict) -> Tuple[List[LineObject], SymbolT
 
         if mode is None:
             if not pl.operands:
-                lo.errors.append(AsmError(pl.line_no, 5, ERRORS[5]))
+                lo.errors.append(AsmError(pl.line_no, 5, ERRORES[5]))
             else:
                 lo.errors.append(AsmError(pl.line_no, 7, "Modo de direccionamiento no válido"))
             size = 0
@@ -665,7 +668,7 @@ def primera_pasada(path: str, SET_INST: Dict) -> Tuple[List[LineObject], SymbolT
         current_addr = (current_addr + size) & 0xFFFF  # envolvimiento
 
     if not found_end:
-        errors.append(AsmError(0, 10, ERRORS[10]))
+        errors.append(AsmError(0, 10, ERRORES[10]))
 
     symtabs = SymbolTables(labels=labels, constants=constants, variables=variables)
     return line_objs, symtabs, errors
@@ -712,11 +715,11 @@ def segunda_pasada(
                         if name in sym.constants:
                             val = sym.constants[name]
                         else:
-                            errors.append(AsmError(pl.line_no, 2, ERRORS[2]))
+                            errors.append(AsmError(pl.line_no, 2, ERRORES[2]))
                             continue
 
                 if not (0 <= val <= 0xFF):
-                    errors.append(AsmError(pl.line_no, 7, ERRORS[7]))
+                    errors.append(AsmError(pl.line_no, 7, ERRORES[7]))
                     continue
 
                 data_bytes.append(val & 0xFF)
@@ -745,12 +748,12 @@ def segunda_pasada(
         if lo.mode == "INH":
             lo.object_bytes = opcode_bytes
             if pl.operands:
-                errors.append(AsmError(pl.line_no, 6, ERRORS[6]))
+                errors.append(AsmError(pl.line_no, 6, ERRORES[6]))
             continue
 
         # Falta operando
         if not pl.operands:
-            errors.append(AsmError(pl.line_no, 5, ERRORS[5]))
+            errors.append(AsmError(pl.line_no, 5, ERRORES[5]))
             continue
 
         op_token = pl.operands[0].strip()
@@ -758,22 +761,22 @@ def segunda_pasada(
 
         # IMM
         if lo.mode == "IMM":
-            sym_name, imm_val = parse_immediate(op_token)
+            sym_name, imm_val = parse_inmediato(op_token)
 
             if sym_name is not None:
                 if sym_name not in sym.constants:
-                    errors.append(AsmError(pl.line_no, 1, ERRORS[1]))
+                    errors.append(AsmError(pl.line_no, 1, ERRORES[1]))
                     continue
                 imm_val = sym.constants[sym_name]
 
             if imm_val is None:
-                errors.append(AsmError(pl.line_no, 7, ERRORS[7]))
+                errors.append(AsmError(pl.line_no, 7, ERRORES[7]))
                 continue
 
             op_bytes = total_bytes - len(opcode_bytes)
             max_val = (1 << (8 * op_bytes)) - 1
             if not (0 <= imm_val <= max_val):
-                errors.append(AsmError(pl.line_no, 7, ERRORS[7]))
+                errors.append(AsmError(pl.line_no, 7, ERRORES[7]))
                 continue
 
             for shift in reversed(range(op_bytes)):
@@ -788,13 +791,13 @@ def segunda_pasada(
             elif name in sym.constants:
                 target = sym.constants[name]
             else:
-                errors.append(AsmError(pl.line_no, 3, ERRORS[3]))
+                errors.append(AsmError(pl.line_no, 3, ERRORES[3]))
                 continue
 
             next_addr = (lo.address + total_bytes) & 0xFFFF
             offset = target - next_addr
             if not (-128 <= offset <= 127):
-                errors.append(AsmError(pl.line_no, 8, ERRORS[8]))
+                errors.append(AsmError(pl.line_no, 8, ERRORES[8]))
                 continue
             obj.append(offset & 0xFF)
 
@@ -808,10 +811,10 @@ def segunda_pasada(
                 if name in sym.constants:
                     val = sym.constants[name]
                 else:
-                    errors.append(AsmError(pl.line_no, 2, ERRORS[2]))
+                    errors.append(AsmError(pl.line_no, 2, ERRORES[2]))
                     continue
             if not (0 <= val <= 0xFF):
-                errors.append(AsmError(pl.line_no, 7, ERRORS[7]))
+                errors.append(AsmError(pl.line_no, 7, ERRORES[7]))
                 continue
             obj.append(val & 0xFF)
 
@@ -830,7 +833,7 @@ def segunda_pasada(
                     elif name in sym.constants:
                         addr_val = sym.constants[name]
                     else:
-                        errors.append(AsmError(pl.line_no, 3, ERRORS[3]))
+                        errors.append(AsmError(pl.line_no, 3, ERRORES[3]))
                         continue
                 else:
                     if name in sym.variables:
@@ -840,18 +843,18 @@ def segunda_pasada(
                     elif name in sym.constants:
                         addr_val = sym.constants[name]
                     else:
-                        errors.append(AsmError(pl.line_no, 2, ERRORS[2]))
+                        errors.append(AsmError(pl.line_no, 2, ERRORES[2]))
                         continue
 
             if addr_val is None:
-                errors.append(AsmError(pl.line_no, 7, ERRORS[7]))
+                errors.append(AsmError(pl.line_no, 7, ERRORES[7]))
                 continue
 
             addr_val &= 0xFFFF
 
             if lo.mode == "DIR":
                 if not (0 <= addr_val <= 0xFF):
-                    errors.append(AsmError(pl.line_no, 7, ERRORS[7]))
+                    errors.append(AsmError(pl.line_no, 7, ERRORES[7]))
                     continue
                 obj.append(addr_val & 0xFF)
             else:  # EXT
@@ -866,18 +869,6 @@ def segunda_pasada(
 #  Función principal de compilación (sin generación de archivos aún)
 # ---------------------------------------------------------------------
 
-@dataclass
-class CompileResult:
-    lines: List[LineObject]
-    symbols: SymbolTables
-    errors: List[AsmError]
-
-@dataclass
-class CompileResult:
-    lines: List[LineObject]
-    symbols: SymbolTables
-    errors: List[AsmError]
-
 def compilar_archivo(path: str, SET_INST: Dict) -> CompileResult:
     """
     Compila un archivo fuente .asm/.asc:
@@ -890,7 +881,6 @@ def compilar_archivo(path: str, SET_INST: Dict) -> CompileResult:
     except FileNotFoundError:
         print(f"[ERROR] No se pudo abrir el archivo fuente: '{path}'")
         print("        Verifica que la ruta y el nombre sean correctos.")
-        # Propagamos la excepción para que el caller decida qué hacer
         raise
 
     errors2 = segunda_pasada(line_objs, sym, SET_INST)
@@ -927,7 +917,7 @@ def generar_lst_html(source_path: str,
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write("<html><head><meta charset='utf-8'>\n")
-        f.write(CSS_COMMON)
+        f.write(CSS_COMUN)
         f.write("</head><body><pre>\n")
 
         for lo in result.lines:
@@ -938,7 +928,7 @@ def generar_lst_html(source_path: str,
 
             bytes_html = ""
             if lo.object_bytes:
-                tags = classify_bytes(lo, SET_INST)
+                tags = clasificar_bytes(lo, SET_INST)
                 parts = []
                 for b, t in zip(lo.object_bytes, tags):
                     cls = "byte "
@@ -1081,7 +1071,7 @@ def generar_ms19_html(source_path: str,
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write("<html><head><meta charset='utf-8'>\n")
-        f.write(CSS_COMMON)
+        f.write(CSS_COMUN)
         f.write("</head><body><pre>\n")
 
         if mem:
@@ -1213,7 +1203,7 @@ def generar_s19_html(source_path: str,
 
     with open(html_path, "w", encoding="utf-8") as f:
         f.write("<html><head><meta charset='utf-8'>\n")
-        f.write(CSS_COMMON)
+        f.write(CSS_COMUN)
         f.write("</head><body><pre>\n")
 
         if mem:
@@ -1238,8 +1228,6 @@ def generar_s19_html(source_path: str,
         f.write("</pre></body></html>\n")
 
     return html_path
-
-
 
 def _line_s19_simple_html(start_addr: int,
                           addrs: list[int],
@@ -1291,10 +1279,6 @@ def _make_s9_record(entry_addr: int) -> str:
     cks = (~s) & 0xFF
     return "S9" + f"{count:02X}{entry_addr:04X}{cks:02X}"
 
-
-
-
-from typing import Optional
 
 def ensamblar_y_generar_archivos(
     source_path: str,
@@ -1359,12 +1343,7 @@ def ensamblar_y_generar_archivos(
 
     return result
 
-
-
-
-# ---------------------------------------------------------------------
-#  Ejemplo de uso mínimo
-# ---------------------------------------------------------------------
+# ----------------------- Ejemplo ---------------------------
 def main(argv=None):
     if argv is None:
         argv = sys.argv
@@ -1388,17 +1367,16 @@ def main(argv=None):
 
     source_path = argv[1]
 
-    # >>> VALIDACIÓN DE EXTENSIÓN <<<
-    if not validar_extension_source(source_path):
-        sys.exit(1)
-    # <<< FIN VALIDACIÓN >>>
+    #  - VALIDACIÓN DE EXTENSIÓN - 
+    if not validar_extencion_correcta(source_path):
+        sys.exit(1)    
 
     flags_raw = ""
     out_dir = None
 
     if len(argv) >= 3:
         if argv[2].startswith("-"):
-            flags_raw = argv[2][1:]   # quitar '-'
+            flags_raw = argv[2][1:]   # quita '-'
             if len(argv) >= 4:
                 out_dir = argv[3]
         else:
@@ -1421,3 +1399,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     main()
+# Ahora si ya esa TodO

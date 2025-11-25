@@ -1,0 +1,116 @@
+<html><head><meta charset='utf-8'>
+
+<style>
+body  { font-family: monospace; background:#ffffff; color:#000000; }
+pre   { font-family: monospace; }
+.line { white-space: pre; }
+
+.addr      { color:#0066cc; }
+.bytes     { }
+.byte      { }
+.byte.opcode  { color:#d00000; font-weight:bold; }
+.byte.operand { color:#007000; }
+.byte.data    { color:#555555; }
+
+.label    { color:#b35900; font-weight:bold; }
+.mnemonic { color:#0000aa; font-weight:bold; }
+.comment  { color:#888888; }
+
+.op-imm  { color:#ff7f00; }
+.op-dir  { color:#008b8b; }
+.op-ext  { color:#800080; }
+.op-indx { color:#2f4f4f; }
+.op-indy { color:#2f4f4f; font-style:italic; }
+.op-rel  { color:#b22222; }
+
+</style>
+</head><body><pre>
+<span class='line'>   1: <span class='addr'>    </span> () : <span class='comment'>; PROGRAMA CORRECTO: RECEPCIÃ“N SERIAL A BUFFER</span></span>
+<span class='line'>   2: <span class='addr'>    </span> () : <span class='comment'>; MCU: 68HC11</span></span>
+<span class='line'>   3: <span class='addr'>    </span> () : </span>
+<span class='line'>   4: <span class='addr'>    </span> () : <span class='comment'>; --------------------------------------</span></span>
+<span class='line'>   5: <span class='addr'>    </span> () : <span class='comment'>; CONSTANTES Y REGISTROS</span></span>
+<span class='line'>   6: <span class='addr'>    </span> () : <span class='comment'>; --------------------------------------</span></span>
+<span class='line'>   7: <span class='addr'>    </span> () : </span>
+<span class='line'>   8: <span class='addr'>    </span> () : <span class='label'>SCDR</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$102F</span></span>
+<span class='line'>   9: <span class='addr'>    </span> () : <span class='label'>SCSR</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$102E</span></span>
+<span class='line'>  10: <span class='addr'>    </span> () : <span class='label'>SCCR2</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$102D</span></span>
+<span class='line'>  11: <span class='addr'>    </span> () : <span class='label'>SCCR1</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$102C</span></span>
+<span class='line'>  12: <span class='addr'>    </span> () : <span class='label'>BAUD</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$102B</span></span>
+<span class='line'>  13: <span class='addr'>    </span> () : <span class='label'>DDRD</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$1009</span></span>
+<span class='line'>  14: <span class='addr'>    </span> () : </span>
+<span class='line'>  15: <span class='addr'>    </span> () : <span class='label'>LIMITE_OK</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$05</span> <span class='comment'>; 5 caracteres</span></span>
+<span class='line'>  16: <span class='addr'>    </span> () : <span class='label'>DIR_BASE</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$0030</span> <span class='comment'>; buffer en RAM</span></span>
+<span class='line'>  17: <span class='addr'>    </span> () : </span>
+<span class='line'>  18: <span class='addr'>    </span> () : <span class='comment'>; Variables en RAM (solo EQU)</span></span>
+<span class='line'>  19: <span class='addr'>    </span> () : <span class='label'>ORDEN</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$0000</span> <span class='comment'>; Ãºltimo carÃ¡cter recibido</span></span>
+<span class='line'>  20: <span class='addr'>    </span> () : <span class='label'>CONTADOR</span> <span class='mnemonic'>EQU</span> <span class='op-imm'>$0001</span> <span class='comment'>; cuÃ¡ntos caracteres llevamos</span></span>
+<span class='line'>  21: <span class='addr'>    </span> () : </span>
+<span class='line'>  22: <span class='addr'>    </span> () : <span class='comment'>; --------------------------------------</span></span>
+<span class='line'>  23: <span class='addr'>    </span> () : <span class='comment'>; CÃ“DIGO PRINCIPAL</span></span>
+<span class='line'>  24: <span class='addr'>    </span> () : <span class='comment'>; --------------------------------------</span></span>
+<span class='line'>  25: <span class='addr'>    </span> () : </span>
+<span class='line'>  26: <span class='addr'>8000</span> () : <span class='mnemonic'>ORG</span> <span class='op-imm'>$8000</span></span>
+<span class='line'>  27: <span class='addr'>8000</span> () : </span>
+<span class='line'>  28: <span class='addr'>8000</span> () : <span class='label'>INICIO</span></span>
+<span class='line'>  29: <span class='addr'>8000</span> (<span class='byte opcode'>8E</span> <span class='byte operand'>00</span> <span class='byte operand'>FF</span>) : <span class='mnemonic'>LDS</span> <span class='op-imm'>#$00FF</span> <span class='comment'>; (inmediato, inherente)</span></span>
+<span class='line'>  30: <span class='addr'>8003</span> () : </span>
+<span class='line'>  31: <span class='addr'>8003</span> (<span class='byte opcode'>BD</span> <span class='byte operand'>80</span> <span class='byte operand'>2B</span>) : <span class='mnemonic'>JSR</span> <span class='op-ext'>SERIAL</span> <span class='comment'>; configura SCI</span></span>
+<span class='line'>  32: <span class='addr'>8006</span> () : </span>
+<span class='line'>  33: <span class='addr'>8006</span> (<span class='byte opcode'>7F</span> <span class='byte operand'>00</span> <span class='byte operand'>01</span>) : <span class='mnemonic'>CLR</span> <span class='op-ext'>CONTADOR</span> <span class='comment'>; (directo + inherente)</span></span>
+<span class='line'>  34: <span class='addr'>8009</span> () : </span>
+<span class='line'>  35: <span class='addr'>8009</span> (<span class='byte opcode'>CE</span> <span class='byte operand'>00</span> <span class='byte operand'>30</span>) : <span class='mnemonic'>LDX</span> <span class='op-imm'>#DIR_BASE</span> <span class='comment'>; X apunta al buffer (inmediato)</span></span>
+<span class='line'>  36: <span class='addr'>800C</span> () : </span>
+<span class='line'>  37: <span class='addr'>800C</span> () : <span class='label'>BUCLE</span></span>
+<span class='line'>  38: <span class='addr'>800C</span> () : <span class='comment'>; (aquÃ­, en un sistema real, se esperarÃ­a a que haya dato en SCSR.</span></span>
+<span class='line'>  39: <span class='addr'>800C</span> () : <span class='comment'>; para simplificar, solo leemos SCDR directamente.)</span></span>
+<span class='line'>  40: <span class='addr'>800C</span> () : </span>
+<span class='line'>  41: <span class='addr'>800C</span> (<span class='byte opcode'>B6</span> <span class='byte operand'>10</span> <span class='byte operand'>2F</span>) : <span class='mnemonic'>LDAA</span> <span class='op-ext'>SCDR</span> <span class='comment'>; (extendido) leer un carÃ¡cter</span></span>
+<span class='line'>  42: <span class='addr'>800F</span> (<span class='byte opcode'>B7</span> <span class='byte operand'>00</span> <span class='byte operand'>00</span>) : <span class='mnemonic'>STAA</span> <span class='op-ext'>ORDEN</span> <span class='comment'>; (directo) guardar Ãºltimo carÃ¡cter</span></span>
+<span class='line'>  43: <span class='addr'>8012</span> (<span class='byte opcode'>97</span> <span class='byte operand'>00</span>) : <span class='mnemonic'>STAA</span> <span class='op-dir'>0</span>, <span class='op-dir'>X</span> <span class='comment'>; (indexado) guardar en buffer</span></span>
+<span class='line'>  44: <span class='addr'>8014</span> (<span class='byte opcode'>08</span>) : <span class='mnemonic'>INX</span> <span class='comment'>; (inherente) avanzar puntero</span></span>
+<span class='line'>  45: <span class='addr'>8015</span> () : </span>
+<span class='line'>  46: <span class='addr'>8015</span> (<span class='byte opcode'>7C</span> <span class='byte operand'>00</span> <span class='byte operand'>01</span>) : <span class='mnemonic'>INC</span> <span class='op-ext'>CONTADOR</span> <span class='comment'>; (directo + inherente)</span></span>
+<span class='line'>  47: <span class='addr'>8018</span> () : </span>
+<span class='line'>  48: <span class='addr'>8018</span> (<span class='byte opcode'>B6</span> <span class='byte operand'>00</span> <span class='byte operand'>01</span>) : <span class='mnemonic'>LDAA</span> <span class='op-ext'>CONTADOR</span> <span class='comment'>; (directo)</span></span>
+<span class='line'>  49: <span class='addr'>801B</span> (<span class='byte opcode'>81</span> <span class='byte operand'>05</span>) : <span class='mnemonic'>CMPA</span> <span class='op-imm'>#LIMITE_OK</span> <span class='comment'>; (inmediato)</span></span>
+<span class='line'>  50: <span class='addr'>801D</span> (<span class='byte opcode'>27</span> <span class='byte operand'>09</span>) : <span class='mnemonic'>BEQ</span> <span class='op-rel'>FIN_OK</span> <span class='comment'>; (relativo) si ya recibimos 5, salir</span></span>
+<span class='line'>  51: <span class='addr'>801F</span> () : </span>
+<span class='line'>  52: <span class='addr'>801F</span> (<span class='byte opcode'>B6</span> <span class='byte operand'>00</span> <span class='byte operand'>00</span>) : <span class='mnemonic'>LDAA</span> <span class='op-ext'>ORDEN</span> <span class='comment'>; (directo)</span></span>
+<span class='line'>  53: <span class='addr'>8022</span> (<span class='byte opcode'>81</span> <span class='byte operand'>58</span>) : <span class='mnemonic'>CMPA</span> <span class='op-imm'>#&#x27;X&#x27;</span> <span class='comment'>; (inmediato) si el Ãºltimo carÃ¡cter es &#x27;X&#x27;</span></span>
+<span class='line'>  54: <span class='addr'>8024</span> (<span class='byte opcode'>27</span> <span class='byte operand'>02</span>) : <span class='mnemonic'>BEQ</span> <span class='op-rel'>FIN_OK</span> <span class='comment'>; (relativo) tambiÃ©n terminamos</span></span>
+<span class='line'>  55: <span class='addr'>8026</span> () : </span>
+<span class='line'>  56: <span class='addr'>8026</span> (<span class='byte opcode'>20</span> <span class='byte operand'>E4</span>) : <span class='mnemonic'>BRA</span> <span class='op-rel'>BUCLE</span> <span class='comment'>; (relativo)</span></span>
+<span class='line'>  57: <span class='addr'>8028</span> () : </span>
+<span class='line'>  58: <span class='addr'>8028</span> () : <span class='label'>FIN_OK</span></span>
+<span class='line'>  59: <span class='addr'>8028</span> (<span class='byte opcode'>01</span>) : <span class='mnemonic'>NOP</span> <span class='comment'>; (inherente)</span></span>
+<span class='line'>  60: <span class='addr'>8029</span> (<span class='byte opcode'>20</span> <span class='byte operand'>FD</span>) : <span class='mnemonic'>BRA</span> <span class='op-rel'>FIN_OK</span> <span class='comment'>; lazo infinito final</span></span>
+<span class='line'>  61: <span class='addr'>802B</span> () : </span>
+<span class='line'>  62: <span class='addr'>802B</span> () : <span class='comment'>; --------------------------------------</span></span>
+<span class='line'>  63: <span class='addr'>802B</span> () : <span class='comment'>; SUBRUTINA DE CONFIGURACIÃ“N SERIAL</span></span>
+<span class='line'>  64: <span class='addr'>802B</span> () : <span class='comment'>; --------------------------------------</span></span>
+<span class='line'>  65: <span class='addr'>802B</span> () : </span>
+<span class='line'>  66: <span class='addr'>802B</span> () : <span class='label'>SERIAL</span></span>
+<span class='line'>  67: <span class='addr'>802B</span> (<span class='byte opcode'>CC</span> <span class='byte operand'>30</span> <span class='byte operand'>2C</span>) : <span class='mnemonic'>LDD</span> <span class='op-imm'>#$302C</span> <span class='comment'>; (inmediato) configuraciÃ³n SCI</span></span>
+<span class='line'>  68: <span class='addr'>802E</span> (<span class='byte opcode'>B7</span> <span class='byte operand'>10</span> <span class='byte operand'>2B</span>) : <span class='mnemonic'>STAA</span> <span class='op-ext'>BAUD</span> <span class='comment'>; (extendido)</span></span>
+<span class='line'>  69: <span class='addr'>8031</span> (<span class='byte opcode'>F7</span> <span class='byte operand'>10</span> <span class='byte operand'>2D</span>) : <span class='mnemonic'>STAB</span> <span class='op-ext'>SCCR2</span> <span class='comment'>; (extendido)</span></span>
+<span class='line'>  70: <span class='addr'>8034</span> () : </span>
+<span class='line'>  71: <span class='addr'>8034</span> (<span class='byte opcode'>86</span> <span class='byte operand'>00</span>) : <span class='mnemonic'>LDAA</span> <span class='op-imm'>#$00</span> <span class='comment'>; (inmediato)</span></span>
+<span class='line'>  72: <span class='addr'>8036</span> (<span class='byte opcode'>B7</span> <span class='byte operand'>10</span> <span class='byte operand'>2C</span>) : <span class='mnemonic'>STAA</span> <span class='op-ext'>SCCR1</span> <span class='comment'>; (extendido)</span></span>
+<span class='line'>  73: <span class='addr'>8039</span> () : </span>
+<span class='line'>  74: <span class='addr'>8039</span> (<span class='byte opcode'>86</span> <span class='byte operand'>FE</span>) : <span class='mnemonic'>LDAA</span> <span class='op-imm'>#$FE</span> <span class='comment'>; (inmediato)</span></span>
+<span class='line'>  75: <span class='addr'>803B</span> (<span class='byte opcode'>B7</span> <span class='byte operand'>10</span> <span class='byte operand'>09</span>) : <span class='mnemonic'>STAA</span> <span class='op-ext'>DDRD</span> <span class='comment'>; (extendido)</span></span>
+<span class='line'>  76: <span class='addr'>803E</span> () : </span>
+<span class='line'>  77: <span class='addr'>803E</span> (<span class='byte opcode'>39</span>) : <span class='mnemonic'>RTS</span> <span class='comment'>; (inherente)</span></span>
+<span class='line'>  78: <span class='addr'>803F</span> () : </span>
+<span class='line'>  79: <span class='addr'>803F</span> () : <span class='comment'>; --------------------------------------</span></span>
+<span class='line'>  80: <span class='addr'>803F</span> () : <span class='comment'>; VECTOR DE RESET</span></span>
+<span class='line'>  81: <span class='addr'>803F</span> () : <span class='comment'>; --------------------------------------</span></span>
+<span class='line'>  82: <span class='addr'>803F</span> () : </span>
+<span class='line'>  83: <span class='addr'>FFFE</span> () : <span class='mnemonic'>ORG</span> <span class='op-imm'>$FFFE</span></span>
+<span class='line'>  84: <span class='addr'>FFFE</span> () : </span>
+<span class='line'>  85: <span class='addr'>FFFE</span> () : <span class='label'>RESET</span></span>
+<span class='line'>  86: <span class='addr'>FFFE</span> (<span class='byte data'>80</span> <span class='byte data'>00</span>) : <span class='mnemonic'>FCB</span> <span class='op-imm'>$80</span>, <span class='op-imm'>$00</span> <span class='comment'>; vector de reset â†’ $8000 (INICIO)</span></span>
+<span class='line'>  87: <span class='addr'>0000</span> () : </span>
+<span class='line'>  88: <span class='addr'>0000</span> () : <span class='mnemonic'>END</span> <span class='op-imm'>$8000</span></span>
+</pre></body></html>
